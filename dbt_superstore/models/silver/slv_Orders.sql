@@ -2,8 +2,8 @@
 
 select
     order_id,
-    order_date::date as order_date,
-    ship_date::date as ship_date,
+    TRY_CAST(order_date AS DATE)        AS order_date,
+    TRY_CAST(ship_date AS DATE)         AS ship_date,
     ship_mode,
     customer_id,
     customer_name,
@@ -17,9 +17,12 @@ select
     category,
     sub_category,
     product_name,
-    sales::number(10,2) as sales,
-    quantity::integer as quantity,
-    discount::number(5,2) as discount,
-    profit::number(10,2) as profit
+    TRY_CAST(sales AS NUMBER(10,2))     AS sales,
+    TRY_CAST(quantity AS INTEGER)       AS quantity,
+    TRY_CAST(discount AS NUMBER(5,2))   AS discount,
+    TRY_CAST(profit AS NUMBER(10,2))    AS profit,
+    CURRENT_TIMESTAMP()                 AS _silver_loaded_at
 
 from {{ source('bronze', 'ORDERS') }}
+where order_id is not null
+QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY order_id) = 1
